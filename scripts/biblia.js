@@ -84,7 +84,7 @@ $(document).ready(function() {
         showChapters(this.value);
     });
 
-    showChapters($('select').val())
+    showChapters($('select').val());
 });
 
 function showChapters(sigla) {
@@ -111,9 +111,41 @@ function open_bible(sigla, capitulo) {
                 let p = $('<p></p>').html(versiculo.key + ' - ' + versiculo.val());
                 texto.append(p);
             });
+
+            $('title').text(kja_books[sigla].livro + ' - ' + capitulo);
         },
         function(a, b, c) {
             console.log('Deu ruim', a, b, c);
         }
     );
 }
+
+var tag_open = '<span class="selecionado">';
+var tag_close = '</span>';
+function selecionar(regexp) {
+    $('#texto').children().each(function(i, elem) {
+        let newStr = $(elem).html().replace(regexp, tag_open + '$&' + tag_close); 
+        $(elem).html(newStr);
+    });
+}
+
+function deselecionar() {
+    var regexp = new RegExp(tag_open + '(.*?)' + tag_close);
+    $('#texto').children().each(function(i, elem) {
+        let newStr = $(elem).html();
+        while(regexp.test(newStr)){
+            newStr = newStr.replace(regexp, '$1');
+        }
+        $(elem).html(newStr);
+    });
+}
+
+$('[name="regexp"]').on('input', function(event) {
+    deselecionar();
+
+    let string = $(event.target).val();
+    if(string) {
+        var regexp = new RegExp(string, 'g');
+        selecionar(regexp);
+    }
+})

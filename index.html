@@ -6,13 +6,44 @@
 
     <title>Bíblia</title>
 
+    <style type="text/css">
+      body {
+        margin-top: 0px
+      }
+
+      ::selection {
+        background-color: yellow;
+      }
+
+      .selecionado {
+        background-color: blue;
+      }
+
+      #painel-principal {
+        float: left;
+        width: 80%;
+        height: 100vh;
+        overflow-y: auto;
+      }
+
+      #painel-direito {
+        max-width: 20%;
+        overflow: auto;
+      }
+    </style>
 </head>
 <body>
-  <form onsubmit="return false;">
-    <select onchange=""></select>
-    <span id="capitulos"></span>
-  </form>
-  <div id="texto"></div>
+  <div id="painel-principal">
+    <form onsubmit="return false;">
+      <select onchange=""></select>
+      <span id="capitulos"></span>
+    </form>
+    <div id="texto"></div>  
+  </div>
+
+  <div id="painel-direito">
+    <input type="text" name="regexp" placeholder="Expressão Regular">
+  </div>
 
 <script src="./scripts/firebase.js"></script>
 <script>
