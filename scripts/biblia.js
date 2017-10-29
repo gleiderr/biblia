@@ -118,6 +118,51 @@ function open_bible(sigla, capitulo) {
             console.log('Deu ruim', a, b, c);
         }
     );
+
+    show_registros();
+}
+
+function show_registros() {
+    $('#registros').empty();
+
+    var promisse = firebase.database().ref('/registros/genericos').once('value');
+    promisse.then(
+        function(snapshot) {
+            let text = $('#texto').text();
+            snapshot.forEach(function(reg) {
+                let regexp = new RegExp(reg.val().regexp);
+                if(regexp.test(text)) {
+                    show_registro(reg.val());
+                }
+            })
+        },
+        function(a, b, c) {
+            console.log('Deu ruim', a, b, c);
+        }  
+    );
+}
+
+function show_registro(reg) {
+    let form = $('<form onsubmit="return false;"></form>');
+    let regexp = $('<input type="text" name="regexp">');
+    let comment = $('<textarea><textarea>');
+
+    regexp.val(reg.regexp);
+    comment.val(reg.comentario);
+
+    $('#registros').append(form);
+    
+    form.append(regexp)
+        .append(comment);
+
+    form.on('mouseenter', function() {
+        let string = $(this.regexp).val();
+        if(string) {
+            deselecionar();
+            var regexp = new RegExp(string, 'g');
+            selecionar(regexp);
+        }
+    });
 }
 
 var tag_open = '<span class="selecionado">';
@@ -148,4 +193,26 @@ $('[name="regexp"]').on('input', function(event) {
         var regexp = new RegExp(string, 'g');
         selecionar(regexp);
     }
-})
+});
+
+$('[name="save_regexp"]').on('click', function(event) {
+    var regexp = $('[name="regexp"]').val();
+    if(!regexp)
+        return;
+
+    let reg = {
+        regexp: regexp,
+        comentario: '',
+    };
+
+    let ref = firebase.database().ref('/registros/genericos/').push();
+    let promisse = ref.set(reg);
+
+    promisse.then(
+        function() { 
+            console.log('Expressão Gravada');
+            show_registro(reg);
+        },
+        function() { console.log('Expressão não gravada!')}
+    );
+});
