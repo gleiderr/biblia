@@ -105,13 +105,15 @@ function showChapters(sigla) {
 function open_bible(sigla, capitulo) {
     firebase.database().ref('/biblia/kja/' + sigla + '/' + capitulo).once('value').then(
         function(snapshot) {
-            let texto = $('#texto').empty();
+            let texto = $('#texto').empty(); //Limpa texto exibido anteriormente
 
+            //Apensa ao #texto um parágrafo para cada versículo.
             snapshot.forEach(function(versiculo) {
                 let p = $('<p></p>').html(versiculo.key + ' - ' + versiculo.val());
                 texto.append(p);
             });
 
+            //Altera título da página de acordo com o texto selecionado.
             $('title').text(kja_books[sigla].livro + ' - ' + capitulo);
         },
         function(a, b, c) {
@@ -122,13 +124,16 @@ function open_bible(sigla, capitulo) {
     show_registros();
 }
 
+/*  */
 function show_registros() {
-    $('#registros').empty();
+    $('#registros').empty(); //Remove registros exibidos anteriormente
 
     var promisse = firebase.database().ref('/registros/genericos').once('value');
     promisse.then(
         function(snapshot) {
-            let text = $('#texto').text();
+            let text = $('#texto').text(); //Capitura #texto
+
+            /* Se houver correspondência entre expressão regular e texto, exibe o registro correspondente. */
             snapshot.forEach(function(reg) {
                 let regexp = new RegExp(reg.val().regexp);
                 if(regexp.test(text)) {
@@ -157,17 +162,19 @@ function show_registro(reg) {
 
     form.on('mouseenter', function() {
         let string = $(this.regexp).val();
-        if(string) {
-            deselecionar();
-            var regexp = new RegExp(string, 'g');
-            selecionar(regexp);
-        }
+        deselecionar();
+        selecionar(string);
     });
 }
 
 var tag_open = '<span class="selecionado">';
 var tag_close = '</span>';
-function selecionar(regexp) {
+function selecionar(string) {
+    regexp = new RegExp(string, 'g');
+    if(regexp.test('')) //Verifica seleção de strings vazias, o que costuma causar erros.
+        return;
+
+    /*Para cada versículo, seleciona trecho que corresponda à expressão regular. */
     $('#texto').children().each(function(i, elem) {
         let newStr = $(elem).html().replace(regexp, tag_open + '$&' + tag_close); 
         $(elem).html(newStr);
@@ -185,14 +192,10 @@ function deselecionar() {
     });
 }
 
-$('[name="regexp"]').on('input', function(event) {
-    deselecionar();
-
+$('[name="regexp"]').on('input mouseenter', function(event) {
     let string = $(event.target).val();
-    if(string) {
-        var regexp = new RegExp(string, 'g');
-        selecionar(regexp);
-    }
+    deselecionar();
+    selecionar(string);
 });
 
 $('[name="save_regexp"]').on('click', function(event) {
