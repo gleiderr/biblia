@@ -135,6 +135,7 @@ function show_registros() {
 
             /* Se houver correspondência entre expressão regular e texto, exibe o registro correspondente. */
             snapshot.forEach(function(reg) {
+                console.log(reg.key);
                 let regexp = new RegExp(reg.val().regexp);
                 if(regexp.test(text)) {
                     show_registro(reg.val());
@@ -171,7 +172,7 @@ var tag_open = '<span class="selecionado">';
 var tag_close = '</span>';
 function selecionar(string) {
     regexp = new RegExp(string, 'g');
-    if(regexp.test('')) //Verifica seleção de strings vazias, o que costuma causar erros.
+    if(regexp_invalida(regexp))
         return;
 
     /*Para cada versículo, seleciona trecho que corresponda à expressão regular. */
@@ -192,6 +193,10 @@ function deselecionar() {
     });
 }
 
+function regexp_invalida(regexp) {
+    return regexp.test(''); //Verifica seleção de strings vazias, o que costuma causar erros.
+}
+
 $('[name="regexp"]').on('input mouseenter', function(event) {
     let string = $(event.target).val();
     deselecionar();
@@ -200,7 +205,7 @@ $('[name="regexp"]').on('input mouseenter', function(event) {
 
 $('[name="save_regexp"]').on('click', function(event) {
     var regexp = $('[name="regexp"]').val();
-    if(!regexp)
+    if(regexp_invalida(regexp))
         return;
 
     let reg = {
