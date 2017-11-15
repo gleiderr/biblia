@@ -66,6 +66,7 @@ const kja_books = {
     'Zec': { livro: 'Zacarias', nCapitulos: 14},
     'Zep': { livro: 'Sofonias', nCapitulos: 3},
 };
+const database = firebase.database();
 
 
 $(document).ready(function() {
@@ -103,7 +104,7 @@ function showChapters(sigla) {
 }
 
 function open_bible(sigla, capitulo) {
-    firebase.database().ref('/biblia/kja/' + sigla + '/' + capitulo).once('value').then(
+    database.ref('/biblia/kja/' + sigla + '/' + capitulo).once('value').then(
         function(snapshot) {
             let texto = $('#texto').empty(); //Limpa texto exibido anteriormente
 
@@ -128,17 +129,21 @@ function open_bible(sigla, capitulo) {
 function show_registros() {
     $('#registros').empty(); //Remove registros exibidos anteriormente
 
-    var promisse = firebase.database().ref('/registros/genericos').once('value');
+    var promisse = database.ref('/registros/genericos/expressoes').once('value');
     promisse.then(
         function(snapshot) {
-            let text = $('#texto').text(); //Capitura #texto
+            let text = $('#texto').text(); //Captura #texto
 
             /* Se houver correspondência entre expressão regular e texto, exibe o registro correspondente. */
-            snapshot.forEach(function(reg) {
-                console.log(reg.key);
-                let regexp = new RegExp(reg.val().regexp);
+            snapshot.forEach(function(expressao) {
+                let regexp = new RegExp(expressao.val());
                 if(regexp.test(text)) {
-                    show_registro(reg.val());
+                    let ref = database.ref('/registros/genericos/dados/' + expressao.key);
+                    let promisse = ref.once('value').then(
+                        function(snapshot) {
+                            show_registro(snapshot.val());
+                        }
+                    );
                 }
             })
         },
@@ -194,6 +199,8 @@ function deselecionar() {
 }
 
 function regexp_invalida(regexp) {
+    console.assert(regexp instanceof RegExp, 'regexp deveria ser do tipo RegExp');
+
     return regexp.test(''); //Verifica seleção de strings vazias, o que costuma causar erros.
 }
 
@@ -205,7 +212,7 @@ $('[name="regexp"]').on('input mouseenter', function(event) {
 
 $('[name="save_regexp"]').on('click', function(event) {
     var regexp = $('[name="regexp"]').val();
-    if(regexp_invalida(regexp))
+    if(regexp_invalida(new RegExp(regexp)))
         return;
 
     let reg = {
@@ -213,8 +220,14 @@ $('[name="save_regexp"]').on('click', function(event) {
         comentario: '',
     };
 
-    let ref = firebase.database().ref('/registros/genericos/').push();
-    let promisse = ref.set(reg);
+    let refKey = database.ref('/registros/genericos/expressoes').push().key;
+
+    var updates = {};
+    updates['/registros/genericos/expressoes/' + refKey] = regexp;
+    updates['/registros/genericos/dados/' + refKey] = reg;
+
+
+    let promisse = database.ref().update(updates);
 
     promisse.then(
         function() { 
